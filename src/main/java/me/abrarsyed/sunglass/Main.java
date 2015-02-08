@@ -48,7 +48,7 @@ public class Main
         if (!serverList.exists())
             return new String[0];
         
-        try (BufferedReader reader = new BufferedReader(new FileReader(propertiesFile)))
+        try (BufferedReader reader = new BufferedReader(new FileReader(serverList)))
         {
             while(reader.ready())
             {
