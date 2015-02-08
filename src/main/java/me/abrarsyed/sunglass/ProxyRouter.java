@@ -1,13 +1,16 @@
 package me.abrarsyed.sunglass;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +89,7 @@ public class ProxyRouter implements Route
                     continue;
                 }
 
-	            outFile.getParentFile().mkdirs();
+                outFile.getParentFile().mkdirs();
 
                 // just to close the streams...
                 try (ReadableByteChannel channel = Channels.newChannel(connect.getInputStream());
@@ -96,7 +99,7 @@ public class ProxyRouter implements Route
 
                     outStream.flush();
                 }
-                
+
             }
             catch (IOException e)
             {
@@ -114,7 +117,16 @@ public class ProxyRouter implements Route
         else
         {
             response.type("application/octet-stream");
-            return outFile;
+
+            FileInputStream in = new FileInputStream(outFile);
+            OutputStream out = response.raw().getOutputStream();
+
+            IOUtils.copy(in, out);
+
+            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
+
+            return true;
         }
     }
 
