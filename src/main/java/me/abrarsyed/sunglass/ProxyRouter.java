@@ -25,7 +25,7 @@ public class ProxyRouter implements Route
     public ProxyRouter(File repoDir, String[] servers)
     {
         if (repoDir == null || servers == null)
-            throw new IllegalArgumentException("Argumetns are null!");
+            throw new IllegalArgumentException("Arguments are null!");
         
         this.repoDir = repoDir;
         this.servers = servers;
@@ -107,7 +107,7 @@ public class ProxyRouter implements Route
         
         if (!outFile.exists())
         {
-            logger.info("resource '{}' found not found on any of the {} servers", path, servers.length);
+            logger.info("resource '{}' not found on any of the {} servers", path, servers.length);
             response.status(404);
             return null;
         }
