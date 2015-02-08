@@ -38,7 +38,7 @@ public class Main
         // get -> admin
         
         // get proxy thingy
-        Spark.get("*", new ProxyRouter(repoDIr, readServerList(serversFile)));
+        Spark.get("*", new ProxyRouter(repoDir, readServerList(serverList)));
     }
     
     protected static String[] readServerList(File serverList) throws IOException
