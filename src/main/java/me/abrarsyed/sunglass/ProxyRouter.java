@@ -17,7 +17,7 @@ import spark.Route;
 
 public class ProxyRouter implements Route
 {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger logger = LoggerFactory.getLogger(ProxyRouter.class);
     
     private File repoDir;
     private String[] servers;

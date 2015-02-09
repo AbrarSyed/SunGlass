@@ -8,18 +8,23 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import spark.Spark;
 
 public class Main
 {
     private static final Properties props = new Properties();
     private static File propertiesFile = new File("SunGlass.properties");
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
     
     public static void main(String[] args) throws IOException
     {
         // parse arguments
         
         // parse
+        logger.info("Reading property file: {}", propertiesFile.getCanonicalPath());
         try (Reader reader = new FileReader(propertiesFile))
         {
             props.load(reader);
@@ -33,12 +38,19 @@ public class Main
         Spark.ipAddress(ip);
         Spark.port(port);
         
+        logger.info("Cache repository set: {}", repoDir.getCanonicalPath());
         
         // get -> info
         // get -> admin
+        String[] servers = readServerList(serverList);
+        logger.info("Checking {} external Maven repositories", servers.length);
+        for (String server : servers)
+            logger.debug(server);
+        
+        
         
         // get proxy thingy
-        Spark.get("*", new ProxyRouter(repoDir, readServerList(serverList)));
+        Spark.get("*", new ProxyRouter(repoDir, servers));
     }
     
     protected static String[] readServerList(File serverList) throws IOException
@@ -48,14 +60,14 @@ public class Main
         if (!serverList.exists())
             return new String[0];
         
-        try (BufferedReader reader = new BufferedReader(new FileReader(propertiesFile)))
+        try (BufferedReader reader = new BufferedReader(new FileReader(serverList)))
         {
             while(reader.ready())
             {
                 String line = reader.readLine();
                 line = line.trim();
                 
-                if (line.startsWith("#"))
+                if (line.startsWith("#") || line.isEmpty())
                     continue;
                 
                 int index = line.indexOf('#');
