@@ -18,3 +18,7 @@ build
 
 # general
 run
+
+servers.txt
+SunGlass.properties
+repo/*

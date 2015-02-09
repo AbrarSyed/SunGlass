@@ -1,13 +1,16 @@
 package me.abrarsyed.sunglass;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +28,7 @@ public class ProxyRouter implements Route
     public ProxyRouter(File repoDir, String[] servers)
     {
         if (repoDir == null || servers == null)
-            throw new IllegalArgumentException("Argumetns are null!");
+            throw new IllegalArgumentException("Arguments are null!");
         
         this.repoDir = repoDir;
         this.servers = servers;
@@ -86,21 +89,17 @@ public class ProxyRouter implements Route
                     continue;
                 }
 
-                // just to close the streams...
-                try (InputStream inStream = connect.getInputStream(); OutputStream outStream = new FileOutputStream(outFile))
-                {
-                    int data = inStream.read();
-                    while (data != -1)
-                    {
-                        outStream.write(data);
+                outFile.getParentFile().mkdirs();
 
-                        // read next
-                        data = inStream.read();
-                    }
+                // just to close the streams...
+                try (ReadableByteChannel channel = Channels.newChannel(connect.getInputStream());
+                     FileOutputStream outStream = new FileOutputStream(outFile))
+                {
+                    outStream.getChannel().transferFrom(channel, 0, Long.MAX_VALUE);
 
                     outStream.flush();
                 }
-                
+
             }
             catch (IOException e)
             {
@@ -111,14 +110,23 @@ public class ProxyRouter implements Route
         
         if (!outFile.exists())
         {
-            logger.info("resource '{}' found not found on any of the {} servers", path, servers.length);
+            logger.info("resource '{}' not found on any of the {} servers", path, servers.length);
             response.status(404);
             return null;
         }
         else
         {
             response.type("application/octet-stream");
-            return outFile;
+
+            FileInputStream in = new FileInputStream(outFile);
+            OutputStream out = response.raw().getOutputStream();
+
+            IOUtils.copy(in, out);
+
+            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
+
+            return true;
         }
     }
 

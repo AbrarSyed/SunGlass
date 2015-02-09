@@ -7,7 +7,7 @@ group = "me.abrarsyed.sunglass"
 mainClassName = group + ".Main"
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 // In this section you declare the dependencies for your production and test code
@@ -15,10 +15,11 @@ dependencies {
     compile 'com.sparkjava:spark-core:2.1'
     compile 'org.slf4j:slf4j-api:1.7.7'
     compile 'com.google.guava:guava:18.0'
+    compile 'commons-io:commons-io:2.4'
 
     testCompile "junit:junit:4.11"
 }
 
 distZip {
-	from "package"
+    from "package"
 }
