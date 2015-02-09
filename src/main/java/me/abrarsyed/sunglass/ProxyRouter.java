@@ -25,7 +25,7 @@ public class ProxyRouter implements Route
     public ProxyRouter(File repoDir, String[] servers)
     {
         if (repoDir == null || servers == null)
-            throw new IllegalArgumentException("Argumetns are null!");
+            throw new IllegalArgumentException("Arguments are null!");
         
         this.repoDir = repoDir;
         this.servers = servers;
