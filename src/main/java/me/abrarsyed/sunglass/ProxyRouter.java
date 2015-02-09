@@ -65,61 +65,72 @@ public class ProxyRouter implements Route
         // local file location
         File outFile = new File(repoDir, path);
         
-        for (int i = 0; i < servers.length && !outFile.exists(); i++)
-        {
-            String url = servers[i] + path;
-            
-            // DOWNLOAD
-            try
-            {
-                HttpURLConnection connect = (HttpURLConnection) (new URL(url)).openConnection();
-                connect.setInstanceFollowRedirects(true);
-
-                if (connect.getResponseCode() == 200)
-                {
-                    logger.info("resource '{}' found in server '{}'", path, servers[i]);
-                }
-                else
-                // 40X or 50X errors, or the unlikely 30X thingy
-                {
-                    logger.debug("{}: {} from {}", connect.getResponseCode(), connect.getResponseMessage(), url);
-                    continue;
-                }
-
-                // just to close the streams...
-                try (InputStream inStream = connect.getInputStream(); OutputStream outStream = new FileOutputStream(outFile))
-                {
-                    int data = inStream.read();
-                    while (data != -1)
-                    {
-                        outStream.write(data);
-
-                        // read next
-                        data = inStream.read();
-                    }
-
-                    outStream.flush();
-                }
-                
-            }
-            catch (IOException e)
-            {
-                logger.debug("Error on server {}", e, url);
-            }
-        }
-        
-        
+        // if it doesnt exist already
         if (!outFile.exists())
         {
-            logger.info("resource '{}' found not found on any of the {} servers", path, servers.length);
-            response.status(404);
-            return null;
-        }
-        else
-        {
-            response.type("application/octet-stream");
-            return outFile;
-        }
-    }
+            // loop through servers till found
+            for (int i = 0; i < servers.length && !outFile.exists(); i++)
+            {
+                String url = servers[i] + path;
 
+                // DOWNLOAD
+                try
+                {
+                    HttpURLConnection connect = (HttpURLConnection) (new URL(url)).openConnection();
+                    connect.setInstanceFollowRedirects(true);
+
+                    if (connect.getResponseCode() == 200)
+                    {
+                        logger.info("resource '{}' found in server '{}'", path, servers[i]);
+                    }
+                    else
+                    // 40X or 50X errors, or the unlikely 30X thingy
+                    {
+                        logger.debug("{}: {} from {}", connect.getResponseCode(), connect.getResponseMessage(), url);
+                        continue;
+                    }
+                    
+                    outFile.getParentFile().mkdirs();
+                    outFile.createNewFile();
+
+                    // just to close the streams...
+                    try (InputStream inStream = connect.getInputStream(); OutputStream outStream = new FileOutputStream(outFile))
+                    {
+                        if (connect.getContentLength() > 0)
+                        {
+                            // store the byte array in ram and send. Easier on the disk.
+                            byte[] bytes = new byte[connect.getContentLength()];
+                            inStream.read(bytes);
+                            outStream.write(bytes);
+                            outStream.flush();
+                            response.type("application/octet-stream");
+                            return bytes;
+                        }
+                        else
+                        {
+                            // this data be too darn large ...
+                            // TODO: spawn downloading thread
+                            response.redirect(url);
+                            return null;
+                        }
+                    }
+
+                }
+                catch (IOException e)
+                {
+                    logger.debug("Error on server {}", e, url);
+                }
+            }
+            
+            if (!outFile.exists())
+            {
+                logger.info("resource '{}' not found on any of the {} servers", path, servers.length);
+                response.status(404);
+                return null;
+            }
+        }
+        
+        response.type("application/octet-stream");
+        return outFile;
+    }
 }

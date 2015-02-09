@@ -47,8 +47,6 @@ public class Main
         for (String server : servers)
             logger.debug(server);
         
-        
-        
         // get proxy thingy
         Spark.get("*", new ProxyRouter(repoDir, servers));
     }
